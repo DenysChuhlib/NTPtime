@@ -1,0 +1,119 @@
+#######################################
+# Syntax Coloring Map For NTPtime
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+NTPtime	KEYWORD1
+
+UNIXtime	KEYWORD1
+
+Time	KEYWORD1
+
+Timer	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+setPeriod	KEYWORD2
+setHost	KEYWORD2
+begin	KEYWORD2
+end	KEYWORD2
+asyncMode	KEYWORD2
+updateNow	KEYWORD2
+updateOnTime	KEYWORD2
+tick	KEYWORD2
+ping	KEYWORD2
+NTPstatus	KEYWORD2
+
+
+setUnixGMT	KEYWORD2
+setUnixFromDate	KEYWORD2
+
+setTimeZone	KEYWORD2
+getTimeZoneM	KEYWORD2
+
+setDST	KEYWORD2
+setSummerTime	KEYWORD2
+setWinterTime	KEYWORD2
+setStandardTime	KEYWORD2
+getDST	KEYWORD2
+DST	KEYWORD2
+
+msFromUpdate	KEYWORD2
+unix	KEYWORD2
+unixGMT	KEYWORD2
+
+ms	KEYWORD2
+second	KEYWORD2
+minute	KEYWORD2
+hour	KEYWORD2
+day	KEYWORD2
+month	KEYWORD2
+year	KEYWORD2
+dayWeek	KEYWORD2
+
+onTime	KEYWORD2
+onDate	KEYWORD2
+
+timeAfter	KEYWORD2
+dateAfter	KEYWORD2
+
+everyH	KEYWORD2
+everyM	KEYWORD2
+everyS	KEYWORD2
+everyMs	KEYWORD2
+
+periodInSec	KEYWORD2
+periodInDays	KEYWORD2
+
+timeOutD	KEYWORD2
+timeOutH	KEYWORD2
+timeOutM	KEYWORD2
+timeOutS	KEYWORD2
+
+isLeap	KEYWORD2
+lastDayOfMonth	KEYWORD2
+
+timeString	KEYWORD2
+dateString	KEYWORD2
+
+monthString	KEYWORD2
+dayWeekString	KEYWORD2
+monthShortString	KEYWORD2
+dayWeekShortString	KEYWORD2
+
+monthStringUA	KEYWORD2
+dayWeekStringUA	KEYWORD2
+monthShortStringUA	KEYWORD2
+dayWeekShortStringUA	KEYWORD2
+
+status	KEYWORD2
+
+startTime	KEYWORD2
+stopTime	KEYWORD2
+
+#######################################
+# Constants (LITERAL1)
+#######################################
+
+NTPtimeClockStrata_val	LITERAL1
+NTPtimeEthernetUdp	LITERAL1
+
+NTP_OK	LITERAL1
+NTP_NOT_STARTED	LITERAL1
+NTP_NOT_CONNECTED_WIFI	LITERAL1
+NTP_NOT_CONNECTED_TO_SERVER	LITERAL1
+NTP_NOT_SENT_PACKET	LITERAL1
+NTP_WAITING_REPLY	LITERAL1
+NTP_TIMEOUT	LITERAL1
+NTP_REPLY_ERROR	LITERAL1
+
+NTP_NOT_CONNECTED_Ethernet	LITERAL1
+
+UNIX_OK	LITERAL1
+UNIX_NOT_SYNCHRONIZED	LITERAL1
+UNIX_NOT_STARTED	LITERAL1
