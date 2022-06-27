@@ -1,6 +1,7 @@
 # NTPtime
 Библиотека времени со многими функциями:
 - получение точного времени с помощью NTP
+- Альтернатива стандартной библиотеке `Time.h`
 - Возможность делать таймер в равное время, например ровно в 12:00 и так ежечасно, занимающий только один байт
 - Можно делать целый календарь
 
@@ -14,14 +15,20 @@ esp8266, esp32, Ethernet
 - [Установка](#install)
 - [Инициализация](#init)
 - [Использование](#usage)
+    - [NTPtime](#NTPtime)
+    - [UNIXtime і NTPtime](#UNIXtime&NTPtime)
+    - [TimeFunc](#TimeFunc)
 - [Пример](#example)
 - [Версии](#versions)
 
 <a id="install"></a>
 ## Установка
+- Библиотеку можно найти по названию `NTPtime` и установить через менеджер библиотек в:
+    - Arduino IDE
+    - Arduino IDE v2
 - [Загрузить библиотеку](https://github.com/DenysChuhlib/NTPtime/archive/refs/heads/main.zip) .zip архивом для ручной установки:
-- Распаковать и положить в `Документы/Arduino/libraries/`
-- (Arduino IDE) автоматическая установка с .zip: `Скетч/Подключить библиотеку/Добавить .ZIP библиотеку…` и указать загруженный архив
+    - Распаковать и положить в `Документы/Arduino/libraries/`
+    - (Arduino IDE) автоматическая установка с .zip: `Скетч/Подключить библиотеку/Добавить .ZIP библиотеку…` и указать загруженный архив
 
 <a id="init"></a>
 ## Инициализация
@@ -35,6 +42,7 @@ UNIXtime(uint16_t y, uint8_t m, uint8_t d, uint8_t h, uint8_t mn, uint8_t s, int
 ````
 <a id="usage"></a>
 ## Использование
+<a id="NTPtime"></a>
 ### NTPtime
 ```cpp
 
@@ -49,7 +57,7 @@ void updateNow(); 						// обновить сейчас (ручной запу�
 
 bool updateOnTime(uint8_t h, uint8_t m, uint8_t s); 		// функция `loop()` цикла обновляющая время в Г, Х, С (работает в паре с tick())
 
-bool tick(uint16_t prd); 					// функция `loop()` цикла обновляющая время по периоду (prd), после ручного запуска или в определенное время
+bool tick(uint16_t prd); 					// функция `loop()` цикла обновляющая время по периоду (prd), после ручного запуска или в определенное время, во время обновления возвращает true
 
 int16_t ping(); 						// получить пинг сервера
 
@@ -66,111 +74,164 @@ int16_t ping(); 						// получить пинг сервера
 */
 uint8_t NTPstatus();
 ```
-
+<a id="UNIXtime&NTPtime"></a>
 ### UNIXtime и NTPtime
 
 ```cpp
-void setUnixGMT(uint32_t unix, uint16_t ms = 0); 		// установить unix время в отношении гринвича
+void setUnixGMT(uint32_t unix, uint16_t ms);                    // установить unix время относительно гринвича
 
 void setUnixFromDate(uint16_t y, uint8_t m, uint8_t d, uint8_t h, uint8_t mn, uint8_t s, int16_t tzM = 0, uint16_t ms = 0); // название функции говорит само за себя
 
-void setTimeZone(int8_t tz, int8_t tzM); 			// установить часовой пояс
-int16_t getTimeZoneM(); 					// узнать часовой пояс в минутах
+void setTimeZone(int8_t tz, int8_t tzM);                        // установить часовой пояс
+int16_t getTimeZoneM();                                         // узнать часовой пояс в минутах
 
-void setDST(int8_t dst_wt); 					// установить летнее время 1 (по умолчанию) и зимнее время -1 или стандартное время 0
-void setSummerTime(); 						// установить летнее время
+void setDST(int8_t dst_wt);                                     // установить летнее время 1 (по умолчанию) и зимнее время -1 или стандартное время 0
+void setSummerTime();                                           // установить летнее время
 
-void setWinterTime(); 						// установить зимнее время
+void setWinterTime();                                           // установить зимнее время
 
-void setStandardTime(); 					// установить стандартное время
+void setStandardTime();                                         // установить стандартное время
 
-int8_t getDST();						// вернет, если летнее время 1 и зимнее время -1 или стандартное время 0
+int8_t getDST();                                                // вернет, если летнее время 1 и зимнее время -1 или стандартное время 0
 
 void DST(uint8_t month_start, uint8_t week_start, uint8_t dayWeek_start, uint8_t h_start,
 uint8_t month_end, uint8_t week_end, uint8_t dayWeek_end, uint8_t h_end, bool dst_or_wt);
-//month_start - месяц начала летнего/зимнего времени
+//month_start – месяц начала летнего/зимнего времени
 //week_start - неделя начала летнего/зимнего времени (если 0 то последняя неделя)
-//dayWeek_start - день недели начала летнего/зимнего времени
-//h_start - час начала летнего/зимнего времени
+//dayWeek_start – день недели начала летнего/зимнего времени
+//h_start – час начала летнего/зимнего времени
 
 //month_end – месяц конца летнего/зимнего времени
 //week_end - неделя конца летнего/зимнего времени (если 0 то последняя неделя)
 //dayWeek_end - день недели конца летнего/зимнего времени
-//h_end - час конца летнего/зимнего времени
+//h_end – час конца летнего/зимнего времени
 
 //dst_or_wt по умолчанию 1 – летнее время, если 0 то зимнее
 //DST(2, 0, 7, 3, 10, 0, 7, 4); //https://en.wikipedia.org/wiki/Eastern_European_Summer_Time
 
-uint32_t msFromUpdate(); 					// миллисекунд последнего обновления
+// получить статус системы
+/*
+    UNIX_OK                 0 – все ок
+    UNIX_NOT_SYNCHRONIZED   1 – не синхронизировано
+    UNIX_NOT_STARTED        2 - остановлено
+*/
+bool status();
 
-uint32_t unixGMT(); 						// unix время в отношении гринвича
+void startTime();                                               // начать отсчет времени
 
-uint32_t unix();  						// unix время в отношении данного часового пояса
+void stopTime();                                                // сбросить отсчет времени
 
-uint16_t ms();  						// миллисекунды
+uint32_t msFromUpdate();                                        // миллисекунд последнего обновления
 
-uint8_t second();  						// получить секунды
+uint32_t unixGMT();                                             // unix время в отношении гринвича
 
-uint8_t minute();  						// получить минуты
+uint32_t unix();                                                // unix время в отношении данного часового пояса
 
-uint8_t hour();  						// получить часы
+uint16_t ms();                                                  // миллисекунды
 
-uint8_t day();  						// получить день месяца
+uint8_t second();                                               // получить секунды
 
-uint8_t month();  						// получить месяц
+uint8_t minute();                                               // получить минуты
 
-uint16_t year();  						// получить год
+uint8_t hour();                                                 // получить часы
 
-uint8_t dayWeek();  						// получить день недели
+uint8_t day();                                                  // получить день месяца
 
-bool onTime (uint8_th, uint8_tm, uint8_ts); 			// название функции говорит само за себя
+uint8_t month();                                                // получить месяц
 
-bool onDate (uint8_td, uint8_tm, uint8_ty); 			// название функции говорит само за себя
+uint16_t year();                                                // получить год
 
-bool timeAfter(uint8_th, uint8_tm, uint8_ts); 			// название функции говорит само за себя
+uint8_t dayWeek();                                              // получить день недели
 
-bool dateAfter(uint8_td, uint8_tm, uint8_ty); 			// название функции говорит само за себя
+bool onTime (uint8_t h, uint8_t m, uint8_t s);                  // название функции говорит само за себя
 
-bool everyH(uint8_t time_last, uint8_t time_out); 		// простые и маленькие таймеры (time_last - последний сохраненный hour()) (time_out от 0 до 24)
-bool everyM(uint8_t time_last, uint8_t time_out); 		// (time_last - последний сохраненный minune()) (time_out от 0 до 60)
-bool everyS(uint8_t time_last, uint8_t time_out); 		// (time_last - последний сохраненный second()) (time_out от 0 до 60)
-bool everyMs(uint16_t time_last, uint16_t time_out); 		// (time_last - последний сохраненный ms()) (time_out от 0 до 1000)
+bool onDate (uint8_t d, uint8_t m, uint8_t y);                  // название функции говорит само за себя
 
-uint32_t periodInSec(uint32_t last_unix); 			// период в секундах (last_unix – последний сохраненный unix())
+bool timeAfter (uint8_t h, uint8_t m, uint8_t s);               // название функции говорит само за себя
+
+bool dateAfter (uint8_t d, uint8_t m, uint8_t y);               // название функции говорит само за себя
+
+bool everyH(uint8_t time_last, uint8_t time_out);               // простые и маленькие таймеры (time_last - последний сохраненный hour()) (time_out от 0 до 24)
+bool everyM(uint8_t time_last, uint8_t time_out);               // (time_last - последний сохранен minute()) (time_out от 0 до 60)
+bool everyS(uint8_t time_last, uint8_t time_out);               // (time_last - последний сохраненный second()) (time_out от 0 до 60)
+bool everyMs(uint16_t time_last, uint16_t time_out);            // (time_last - последний сохраненный ms()) (time_out от 0 до 1000)
+
+uint32_t periodInSec(uint32_t last_unix);                       // период в секундах (last_unix – последний сохраненный unix())
 uint16_t periodInDays(uint32_t last_unix);
+uint16_t periodInMonths(uint32_t last_unix);
 
-bool timeOutD(uint32_t last_unix, uint16_t time_out); 		// если период больше или равен таймауту, то возвращает true
+bool timeOutMonth(uint32_t unix_now, uint32_t last_unix, uint16_t time_out);    // если период больше или равен таймауту, то возвращает true
+bool timeOutD(uint32_t last_unix, uint16_t time_out);
 bool timeOutH(uint32_t last_unix, uint16_t time_out);
 bool timeOutM(uint32_t last_unix, uint16_t time_out);
 bool timeOutS(uint32_t last_unix, uint16_t time_out);
 
-bool isLeap(uint16_t y);  					// если високосный год то возвращает true (если y=0 то считает данный год)
+bool isLeap();                                                  // если високосный год возвращает true (если y = 0 то считает данный год)
 
-uint8_t lastDayOfMonth(uint8_t m, uint16_t y); 			// последний день месяца (если ь = 0 то считает данный месяц) (если y = 0 то считает данный год)
+uint8_t lastDayOfMonth();                                       // последний день месяца (если ь = 0 то считает данный месяц) (если y = 0 то считает данный год)
 
-String timeString();  						// получить строчку времени формата ГГ:ММ:СС
+String timeString();                                            // получить строчку времени формата ГГ:ХХ:СС
 
-String dateString();  						// получить строку даты формата ДД.ММ.ГГГГ
+String dateString();                                            // получить строку даты формата ДД.ММ.ГГГГ
 
-String monthString(uint8_t m = 0);
+String monthString();
+String dayWeekString();
+String monthShortString();
+String dayWeekShortString();
 
-String dayWeekString(uint8_t wd=0);
+String monthStringUA();
+String dayWeekStringUA();
+String monthShortStringUA();
+String dayWeekShortStringUA();
 
-String monthShortString(uint8_t m = 0);
+String monthStringRU();
+String dayWeekStringRU();
+String monthShortStringRU();
+String dayWeekShortStringRU();
+```
+<a id="TimeFunc"></a>
+### TimeFunc
+Просто ```cpp TimeFunc.isLeap(uint16_t y); ``` и все.
+```cpp
 
-String dayWeekShortString(uint8_t wd = 0);
+bool everyH(uint8_t time_now, uint8_t time_last, uint8_t time_out);     // простые и маленькие таймеры (time_last - последний сохраненный hour()) (time_out от 0 до 24)
+bool everyM(uint8_t time_now, uint8_t time_last, uint8_t time_out);     // (time_last – последний сохраненная минута) (time_out от 0 до 60)
+bool everyS(uint8_t time_now, uint8_t time_last, uint8_t time_out);     // (time_last – последний сохраненная секунда) (time_out от 0 до 60)
+bool everyMs(uint16_t time_now, uint16_t time_last, uint16_t time_out); // (time_last – последний сохраненная миллисекунда) (time_out от 0 до 1000)
 
-// получить статус системы
-/*
-    UNIX_OK 			0 – все ок
-    UNIX_NOT_SYNCHRONIZED 	1 – не синхронизировано
-    UNIX_NOT_STARTED 		2 – остановлено
-*/
-bool status();
+uint32_t periodInSec(uint32_t unix_now, uint32_t last_unix);    // период в секундах (last_unix – последний сохраненный unix())
+uint16_t periodInDays(uint32_t unix_now, uint32_t last_unix);
+uint16_t periodInMonths(uint32_t unix_now, uint32_t last_unix);
 
-void startTime(); 						// начать отсчет времени
+bool timeOutMonth(uint32_t unix_now, uint32_t last_unix, uint16_t time_out);    // если период больше или равен таймауту, то возвращает true
+bool timeOutD(uint32_t unix_now, uint32_t last_unix, uint16_t time_out);
+bool timeOutH(uint32_t unix_now, uint32_t last_unix, uint16_t time_out);
+bool timeOutM(uint32_t unix_now, uint32_t last_unix, uint16_t time_out);
+bool timeOutS(uint32_t unix_now, uint32_t last_unix, uint16_t time_out);
 
-void stopTime(); 						// сбить счет времени
+bool isLeap(uint16_t y);                                        // если високосный год возвращает true
+
+uint8_t lastDayOfMonth(uint8_t m, uint16_t y);                  // последний день месяца
+
+String timeString(uint8_t h, uint8_t m, uint8_t s);             // получить строчку времени формата ЧЧ:ММ:СС
+
+String dateString(uint8_t d, uint8_t m, uint8_t y);             // получить строку даты формата ДД.ММ.ГГГГ
+
+String monthString(uint8_t m);
+String dayWeekString(uint8_t wd);
+String monthShortString(uint8_t m);
+String dayWeekShortString(uint8_t wd);
+
+String monthStringUA(uint8_t m);
+String dayWeekStringUA(uint8_t wd);
+String monthShortStringUA(uint8_t m);
+String dayWeekShortStringUA(uint8_t wd);
+
+String monthStringRU(uint8_t m);
+String dayWeekStringRU(uint8_t wd);
+String monthShortStringRU(uint8_t m);
+String dayWeekShortStringRU(uint8_t wd);
+
 ```
 
 ### Особенности
@@ -263,3 +324,4 @@ void loop() {
 <a id="versions"></a>
 ## Версии
 - v1.0
+- v1.1.0

@@ -12,10 +12,7 @@ MIT License
 #define UNIX_NOT_SYNCHRONIZED 1
 #define UNIX_NOT_STARTED 2
 
-const PROGMEM uint8_t UNIX_LAST_DAY_OF_MONTH[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
-
-#include "languages/en.h"
-#include "languages/ua.h"
+#include "TimeFunc.h"
 
 class UNIXtime {
 public:
@@ -109,10 +106,10 @@ public:
 			uint8_t i;
 			uint8_t I;
 			//start
-			if (!week_start) i = lastDayOfMonth(month_start) - 6;
+			if (!week_start) i = TimeFunc.lastDayOfMonth(month_start, _dst_wt_year) - 6;
 			else i = (week_start - 1) * 7 + 1;
 			
-			if (!week_start) I = lastDayOfMonth(month_start) + 1;
+			if (!week_start) I = TimeFunc.lastDayOfMonth(month_start, _dst_wt_year) + 1;
 			else I = week_start* 7 + 1;
 
 			for (i; i < I; i++) {
@@ -123,10 +120,10 @@ public:
 				}
 			}
 			//end			
-			if (!week_end) i = lastDayOfMonth(month_end) - 6;
+			if (!week_end) i = TimeFunc.lastDayOfMonth(month_end, _dst_wt_year) - 6;
 			else i = (week_end - 1) * 7 + 1;
 			
-			if (!week_end) I = lastDayOfMonth(month_end) + 1;
+			if (!week_end) I = TimeFunc.lastDayOfMonth(month_end, _dst_wt_year) + 1;
 			else I = week_end* 7 + 1;
 
 			for (i; i < I; i++) {
@@ -157,6 +154,61 @@ public:
 		
 		return 0;
 	}
+	
+	// отримати статус системи
+    /*
+        UNIX_OK 				0 - все ок
+        UNIX_NOT_SYNCHRONIZED 	1 - не синхронізовано
+        UNIX_NOT_STARTED 		2 - зупинено
+    */	
+	bool status() {
+        return _time_stat;
+    }
+	
+	//
+	void startTime() {
+		if (!_time) {
+			_time = true;
+			_last_upd = millis() - _ms;
+			_time_stat = 1;
+		}
+	}
+	
+	//
+	void stopTime() {
+		if (_time) {
+			_time = false;
+			updateUNIX();
+			_time_stat = 2;
+		}
+	}
+	
+	//
+	UNIXtime operator=(const UNIXtime& _t) {
+		_unix = _t._unix;
+		_last_upd = _t._last_upd;
+		
+		if (_t._time) updateUNIX();
+		else {
+			_ms = _t._ms;
+			_last_upd = millis() - _ms;
+		}
+		
+		_tz = _t._tz;
+		_dst_wt = _t._dst_wt;
+		
+		setTimeStat(1);
+		decodeTime();
+		
+		return *this;
+    }
+	
+	//
+	UNIXtime operator=(const uint32_t _t) {
+		setUnixGMT(_t);
+		return *this;
+    }
+
 
     // мілісекунд з останнього оновлення
     uint32_t msFromUpdate() {
@@ -254,242 +306,237 @@ public:
 		return false;
 	}
 	
-	//
+	//========================================================================
 	bool everyH(uint8_t time_last, uint8_t time_out) {
-		int8_t a = hour();
-		if (time_out == 24 && time_last == a) return true;
-		a -= time_last;
-		if (a < 0) a = -a;
-		if (a >= time_out) return true;
-		return false;
+		//int8_t a = hour();
+		//if (time_out == 24 && time_last == a) return true;
+		//a -= time_last;
+		//if (a < 0) a = -a;
+		//if (a >= time_out) return true;
+		//return false;
+		return TimeFunc.everyH(hour(), time_last, time_out);
 	}
 	
 	//
 	bool everyM(uint8_t time_last, uint8_t time_out) {
-		int8_t a = minute();
-		if (time_out == 60 && time_last == a) return true;
-		a -= time_last;
-		if (a < 0) a = -a;
-		if (a >= time_out) return true;
-		return false;
+		//int8_t a = minute();
+		//if (time_out == 60 && time_last == a) return true;
+		//a -= time_last;
+		//if (a < 0) a = -a;
+		//if (a >= time_out) return true;
+		//return false;
+		return TimeFunc.everyM(minute(), time_last, time_out);
 	}
 	
 	//
 	bool everyS(uint8_t time_last, uint8_t time_out) {
-		int8_t a = second();
-		if (time_out == 60 && time_last == a) return true;
-		a -= time_last;
-		if (a < 0) a = -a;
-		if (a >= time_out) return true;
-		return false;
+		//int8_t a = second();
+		//if (time_out == 60 && time_last == a) return true;
+		//a -= time_last;
+		//if (a < 0) a = -a;
+		//if (a >= time_out) return true;
+		//return false;
+		return TimeFunc.everyS(second(), time_last, time_out);
 	}
 	
 	//
 	bool everyMs(uint16_t time_last, uint16_t time_out) {
-		int16_t a = ms();
-		if (time_out == 1000 && time_last == a) return true;
-		a -= time_last;
-		if (a < 0) a = -a;
-		if (a >= time_out) return true;
-		return false;
+		//int16_t a = ms();
+		//if (time_out == 1000 && time_last == a) return true;
+		//a -= time_last;
+		//if (a < 0) a = -a;
+		//if (a >= time_out) return true;
+		//return false;
+		return TimeFunc.everyMs(ms(), time_last, time_out);
 	}
 	
-	//
+	//========================================================================
 	uint32_t periodInSec(uint32_t last_unix) {
-		return unix() - last_unix;
+		//return unix() - last_unix;
+		return TimeFunc.periodInSec(unix(), last_unix);
 	}
 	
 	//
 	uint16_t periodInDays(uint32_t last_unix) {
-		return periodInSec(last_unix) / 86400UL;
+		//return periodInSec(last_unix) / 86400UL;
+		return TimeFunc.periodInDays(unix(), last_unix);
+	}
+	
+	//
+	uint16_t periodInMonths(uint32_t last_unix) {
+		//UNIXtime t(last_unix);
+		//uint16_t p;
+		//
+		//p = (year() - t.year()) * 12;
+		//p += month() - t.month();
+		//if (day() < t.day()) {
+		//	p--;
+		//}
+		//return p;
+		return TimeFunc.periodInMonths(unix(), last_unix);
+	}
+	
+	//========================================================================
+	bool timeOutMonth(uint32_t last_unix, uint16_t time_out) {
+		//uint16_t a = periodInMonths(last_unix);
+		//if (a >= time_out) return true;
+		//return false;
+		return TimeFunc.timeOutMonth(unix(), last_unix, time_out);
 	}
 	
 	//
 	bool timeOutD(uint32_t last_unix, uint16_t time_out) {
-		uint16_t a = periodInDays(last_unix);
-		if (a >= time_out) return true;
-		return false;
+		//uint16_t a = periodInDays(last_unix);
+		//if (a >= time_out) return true;
+		//return false;
+		return TimeFunc.timeOutD(unix(), last_unix, time_out);
 	}
 	
 	//
 	bool timeOutH(uint32_t last_unix, uint16_t time_out) {
-		uint16_t a = periodInSec(last_unix);
-		time_out = time_out * 3600;
-		if (a >= time_out) return true;
-		return false;
+		//uint16_t a = periodInSec(last_unix);
+		//time_out = time_out * 3600;
+		//if (a >= time_out) return true;
+		//return false;
+		return TimeFunc.timeOutH(unix(), last_unix, time_out);
 	}
 	
 	//
 	bool timeOutM(uint32_t last_unix, uint16_t time_out) {
-		uint16_t a = periodInSec(last_unix);
-		time_out = time_out * 60;
-		if (a >= time_out) return true;
-		return false;
+		//uint16_t a = periodInSec(last_unix);
+		//time_out = time_out * 60;
+		//if (a >= time_out) return true;
+		//return false;
+		return TimeFunc.timeOutM(unix(), last_unix, time_out);
 	}
 	
 	//
 	bool timeOutS(uint32_t last_unix, uint16_t time_out) {
-		uint16_t a = periodInSec(last_unix);
-		if (a >= time_out) return true;
-		return false;
+		//uint16_t a = periodInSec(last_unix);
+		//if (a >= time_out) return true;
+		//return false;
+		return TimeFunc.timeOutS(unix(), last_unix, time_out);
 	}
 	
-	bool isLeap(uint16_t y = 0) {
-		if (!y) y = year();
-		return  y % 4 == 0 && (y % 100 != 0 || y % 400 == 0);
+	bool isLeap() {
+		//y = year();
+		//return  y % 4 == 0 && (y % 100 != 0 || y % 400 == 0);
+		return TimeFunc.isLeap(year());
 	}
 	
 	uint8_t lastDayOfMonth() {
-		lastDayOfMonth(month(), year());
-	}
-	
-	uint8_t lastDayOfMonth(uint8_t m, uint16_t y = 0) {
-		if (!m) m = month();
-		if (!y) y = year();
-		
-		return m != 2 || !isLeap(y) ? pgm_read_byte(&UNIX_LAST_DAY_OF_MONTH[m-1]) : 29u;
+		//m = month();
+		//y = year();
+		//return m != 2 || !isLeap(y) ? pgm_read_byte(&UNIX_LAST_DAY_OF_MONTH[m-1]) : 29u;
+		return TimeFunc.lastDayOfMonth(month(), year());
 	}
 	
     // отримати рядок часу формата ГГ:ХХ:СС
     String timeString() {
-        String str;
-        str.reserve(8);
-        if (hour() < 10) str += '0';
-        str += hour();
-        str += ':';
-        if (minute() < 10) str += '0';
-        str += minute();
-        str += ':';
-        if (second() < 10) str += '0';
-        str += second();
-        return str;
+        //String str;
+        //str.reserve(8);
+        //if (hour() < 10) str += '0';
+        //str += hour();
+        //str += ':';
+        //if (minute() < 10) str += '0';
+        //str += minute();
+        //str += ':';
+        //if (second() < 10) str += '0';
+        //str += second();
+        //return str;
+		return TimeFunc.timeString(hour(), minute(), second());
     }
 
     // отримати рядок дати формата ДД.ММ.РРРР
     String dateString() {
-        String str;
-        str.reserve(10);
+        //String str;
+        //str.reserve(10);
+		//decodeTime();
+        //if (_day < 10) str += '0';
+        //str += _day;
+        //str += '.';
+        //if (_month < 10) str += '0';
+        //str += _month;
+        //str += '.';
+        //str += _year;
+        //return str;
 		decodeTime();
-        if (_day < 10) str += '0';
-        str += _day;
-        str += '.';
-        if (_month < 10) str += '0';
-        str += _month;
-        str += '.';
-        str += _year;
-        return str;
+		return TimeFunc.dateString(_day, _month, _year);
     }
 	
 	//========================================================================
-    String monthString(uint8_t m = 0) {
-		if (!m) m = month();
-        String str = (const char*)pgm_read_byte(&UNIX_MONTH_NAMES_EN[m-1]);
-        return str;
+    String monthString() {
+		//m = month();
+        //String str = (const char*)pgm_read_byte(&UNIX_MONTH_NAMES_EN[m-1]);
+        //return str;
+		return TimeFunc.monthString(month());
     }
 	
 	//
-    String dayWeekString(uint8_t wd = 0) {
-		if (!wd) wd = dayWeek();
-        String str = (const char*)pgm_read_byte(&UNIX_DAY_NAMES_EN[wd-1]);
-        return str;
+    String dayWeekString() {
+		//wd = dayWeek();
+        //String str = (const char*)pgm_read_byte(&UNIX_DAY_NAMES_EN[wd-1]);
+        //return str;
+		return TimeFunc.dayWeekString(dayWeek());
     }
 	
 	//
-    String monthShortString(uint8_t m = 0) {
-		if (!m) m = month();
-        String str = (const char*)pgm_read_byte(&UNIX_MONTH_SHORT_NAMES_EN[m-1]);
-        return str;
+    String monthShortString() {
+		//m = month();
+        //String str = (const char*)pgm_read_byte(&UNIX_MONTH_SHORT_NAMES_EN[m-1]);
+        //return str;
+		return TimeFunc.monthShortString(month());
     }
 	
 	//
-    String dayWeekShortString(uint8_t wd = 0) {
-		if (!wd) wd = dayWeek();
-        String str = (const char*)pgm_read_byte(&UNIX_DAY_SHORT_NAMES_EN[wd-1]);
-        return str;
+    String dayWeekShortString() {
+		//wd = dayWeek();
+        //String str = (const char*)pgm_read_byte(&UNIX_DAY_SHORT_NAMES_EN[wd-1]);
+        //return str;
+		return TimeFunc.dayWeekShortString(dayWeek());
     }
 	
-	//=========================================================================
-    String monthStringUA(uint8_t m = 0) {
-		if (!m) m = month();
-        String str = (const char*)pgm_read_byte(&UNIX_MONTH_NAMES_UA[m-1]);
-        return str;
-    }
-	
-	//
-    String dayWeekStringUA(uint8_t wd = 0) {
-		if (!wd) wd = dayWeek();
-        String str = (const char*)pgm_read_byte(&UNIX_DAY_NAMES_UA[wd-1]);
-        return str;
+	//========================================================================
+    String monthStringUA() {
+		return TimeFunc.monthStringUA(month());
     }
 	
 	//
-    String monthShortStringUA(uint8_t m = 0) {
-		if (!m) m = month();
-        String str = (const char*)pgm_read_byte(&UNIX_MONTH_SHORT_NAMES_UA[m-1]);
-        return str;
+    String dayWeekStringUA() {
+		return TimeFunc.dayWeekStringUA(dayWeek());
     }
 	
 	//
-    String dayWeekShortStringUA(uint8_t wd = 0) {
-		if (!wd) wd = dayWeek();
-        String str = (const char*)pgm_read_byte(&UNIX_DAY_SHORT_NAMES_UA[wd-1]);
-        return str;
-    }//=========================================================================
-	
-	// отримати статус системи
-    /*
-        UNIX_OK 				0 - все ок
-        UNIX_NOT_SYNCHRONIZED 	1 - не синхронізовано
-        UNIX_NOT_STARTED 		2 - зупинено
-    */	
-	bool status() {
-        return _time_stat;
+    String monthShortStringUA() {
+		return TimeFunc.monthShortStringUA(month());
     }
 	
 	//
-	void startTime() {
-		if (!_time) {
-			_time = true;
-			_last_upd = millis() - _ms;
-			_time_stat = 1;
-		}
-	}
+    String dayWeekShortStringUA() {
+		return TimeFunc.dayWeekShortStringUA(dayWeek());
+    }
 	
-	//
-	void stopTime() {
-		if (_time) {
-			_time = false;
-			updateUNIX();
-			_time_stat = 2;
-		}
-	}
-	
-	//
-	UNIXtime operator=(const UNIXtime& _t) {
-		_unix = _t._unix;
-		_last_upd = _t._last_upd;
-		
-		if (_t._time) updateUNIX();
-		else {
-			_ms = _t._ms;
-			_last_upd = millis() - _ms;
-		}
-		
-		_tz = _t._tz;
-		_dst_wt = _t._dst_wt;
-		
-		setTimeStat(1);
-		decodeTime();
-		
-		return *this;
+	//========================================================================
+	String monthStringRU() {
+		return TimeFunc.monthStringRU(month());
     }
 	
 	//
-	UNIXtime operator=(const uint32_t _t) {
-		setUnixGMT(_t);
-		return *this;
+    String dayWeekStringRU() {
+		return TimeFunc.dayWeekStringRU(dayWeek());
     }
-
+	
+	//
+    String monthShortStringRU() {
+		return TimeFunc.monthShortStringRU(month());
+    }
+	
+	//
+    String dayWeekShortStringRU() {
+		return TimeFunc.dayWeekShortStringRU(dayWeek());
+    }//========================================================================
+	
+	
 private:
 	// перерахунок unix в дату
     void decodeTime() {

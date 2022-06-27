@@ -14,6 +14,8 @@ Time	KEYWORD1
 
 Timer	KEYWORD1
 
+TimeFunc	KEYWORD1
+
 #######################################
 # Methods and Functions (KEYWORD2)
 #######################################
@@ -43,6 +45,11 @@ setStandardTime	KEYWORD2
 getDST	KEYWORD2
 DST	KEYWORD2
 
+status	KEYWORD2
+
+startTime	KEYWORD2
+stopTime	KEYWORD2
+
 msFromUpdate	KEYWORD2
 unix	KEYWORD2
 unixGMT	KEYWORD2
@@ -69,7 +76,9 @@ everyMs	KEYWORD2
 
 periodInSec	KEYWORD2
 periodInDays	KEYWORD2
+periodInMonths	KEYWORD2
 
+timeOutMonth	KEYWORD2
 timeOutD	KEYWORD2
 timeOutH	KEYWORD2
 timeOutM	KEYWORD2
@@ -91,10 +100,10 @@ dayWeekStringUA	KEYWORD2
 monthShortStringUA	KEYWORD2
 dayWeekShortStringUA	KEYWORD2
 
-status	KEYWORD2
-
-startTime	KEYWORD2
-stopTime	KEYWORD2
+monthStringRU	KEYWORD2
+dayWeekStringRU	KEYWORD2
+monthShortStringRU	KEYWORD2
+dayWeekShortStringRU	KEYWORD2
 
 #######################################
 # Constants (LITERAL1)

@@ -95,8 +95,6 @@ public:
 			do {
 				_ntp_stat = requestTime();				// запит NTP
 				
-				if (_ntp_stat != NTP_OK) setTimeStat(UNIX_NOT_SYNCHRONIZED);
-				
 				if (!_async) yield();
 			} while (!_async && _ntp_stat == NTP_WAITING_REPLY);
 			
