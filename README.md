@@ -1,3 +1,4 @@
+[![arduino-library-badge](https://www.ardu-badge.com/badge/NTPtime.svg?)](https://www.ardu-badge.com/NTPtime)
 [![Foo](https://img.shields.io/badge/README-English-brightgreen.svg?style=for-the-badge)](/README_EN.md)
 [![Foo](https://img.shields.io/badge/README-Руский-brightgreen.svg?style=for-the-badge)](/README_RU.md)
 
