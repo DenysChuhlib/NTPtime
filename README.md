@@ -1,9 +1,7 @@
-[![arduino-library-badge](https://www.ardu-badge.com/badge/NTPtime.svg?)](https://www.ardu-badge.com/NTPtime)
+[![Foo](https://img.shields.io/badge/Library%20Manager-NTPtime%201.1.1-000282.svg?style=for-the-badge&logo=arduino)](https://www.ardu-badge.com/NTPtime)
 
-[![Foo](https://img.shields.io/badge/README-English-brightgreen.svg?style=for-the-badge)](/README_EN.md)
-[![Foo](https://img.shields.io/badge/README-Руский-brightgreen.svg?style=for-the-badge)](/README_RU.md)
-
-[![Foo](https://img.shields.io/badge/Version-1.1.0-blue.svg?style=flat-square)](#versions)
+[![Foo](https://img.shields.io/badge/README-English-fff700.svg?style=for-the-badge)](https://github-com.translate.goog/DenysChuhlib/NTPtime?_x_tr_sl=uk&_x_tr_tl=en)
+[![Foo](https://img.shields.io/badge/README-Руский-fff700.svg?style=for-the-badge)](/README_RU.md)
 
 # NTPtime
 Бібліотека часу з багатьма функціями:
@@ -150,6 +148,10 @@ uint16_t year(); 						// отримати рік
 
 uint8_t dayWeek(); 						// отримати день тижня
 
+bool isAM();
+bool isPM();
+uint8_t hourFormat12();
+
 bool onTime (uint8_t h, uint8_t m, uint8_t s);			// назва функції говорить сама за себе
 
 bool onDate (uint8_t d, uint8_t m, uint8_t y);			// назва функції говорить сама за себе
@@ -165,6 +167,7 @@ bool everyMs(uint16_t time_last, uint16_t time_out);		// (time_last - остан
 
 uint32_t periodInSec(uint32_t last_unix);			// період в секундах (last_unix - останній збережений unix())
 uint16_t periodInDays(uint32_t last_unix);
+uint16_t periodInFullDays(uint32_t last_unix);
 uint16_t periodInMonths(uint32_t last_unix);
 
 bool timeOutMonth(uint32_t last_unix, uint16_t time_out);	// якщо період більше або дорівнює таймауту то повертає true
@@ -195,13 +198,19 @@ String monthStringRU();
 String dayWeekStringRU();
 String monthShortStringRU();
 String dayWeekShortStringRU();
-
 ```
 <a id="TimeFunc"></a>
 ### TimeFunc
-Просто ```cpp TimeFunc.isLeap(uint16_t y); ``` і все.
+Просто 
+```cpp
+ TimeFunc.isLeap(uint16_t y); 
+``` і все.
 
 ```cpp
+
+bool isAM(uint8_t h);
+bool isPM(uint8_t h);
+uint8_t hourFormat12(uint8_t h);
 
 bool everyH(uint8_t time_now, uint8_t time_last, uint8_t time_out);		// прості і маленькі таймери (time_last - останній збережений hour()) (time_out від 0 до 24)
 bool everyM(uint8_t time_now, uint8_t time_last, uint8_t time_out);		// (time_last - останній збережена хвилина) (time_out від 0 до 60)
@@ -210,6 +219,7 @@ bool everyMs(uint16_t time_now, uint16_t time_last, uint16_t time_out);		// (tim
 
 uint32_t periodInSec(uint32_t unix_now, uint32_t last_unix);			// період в секундах (last_unix - останній збережений unix())
 uint16_t periodInDays(uint32_t unix_now, uint32_t last_unix);
+uint16_t periodInFullDays(uint32_t unix_now, uint32_t last_unix);
 uint16_t periodInMonths(uint32_t unix_now, uint32_t last_unix);
 
 bool timeOutMonth(uint32_t unix_now, uint32_t last_unix, uint16_t time_out);	// якщо період більше або дорівнює таймауту то повертає true
@@ -240,6 +250,11 @@ String monthStringRU(uint8_t m);
 String dayWeekStringRU(uint8_t wd);
 String monthShortStringRU(uint8_t m);
 String dayWeekShortStringRU(uint8_t wd);
+
+void decodeUNIX(uint32_t unix, uint8_t& d, uint8_t& m, uint16_t& y);	// швидке декодування
+void decodeUNIX(uint32_t unix, uint8_t& d, uint8_t& m, uint16_t& y, uint16_t& h, uint16_t& min, uint16_t& s);
+
+void delay(uint32_t t, void (*func)());		// з функцією яка виконуеться підчас затримки (наприклад, TimeFunc.delay(1000, Loop);)
 
 ```
 
@@ -334,3 +349,12 @@ void loop() {
 ## Версії
 - v1.0
 - v1.1.0
+- v1.1.1
+    - Оптимізація
+	- Добавлені нові функції
+	    - `periodInFullDays();`
+		- `isAM();`
+        - `isPM();`
+        - `hourFormat12();`
+		- `decodeUNIX();` - швидке декодування
+		- `delay()` з функцією яка виконуеться підчас затримки
