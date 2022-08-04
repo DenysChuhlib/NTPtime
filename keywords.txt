@@ -63,6 +63,11 @@ month	KEYWORD2
 year	KEYWORD2
 dayWeek	KEYWORD2
 
+isAM	KEYWORD2
+isPM	KEYWORD2
+
+hourFormat12	KEYWORD2
+
 onTime	KEYWORD2
 onDate	KEYWORD2
 
@@ -75,11 +80,13 @@ everyS	KEYWORD2
 everyMs	KEYWORD2
 
 periodInSec	KEYWORD2
+periodInFullDays	KEYWORD2
 periodInDays	KEYWORD2
 periodInMonths	KEYWORD2
 
 timeOutMonth	KEYWORD2
 timeOutD	KEYWORD2
+timeOutFullDays	KEYWORD2
 timeOutH	KEYWORD2
 timeOutM	KEYWORD2
 timeOutS	KEYWORD2
@@ -104,6 +111,10 @@ monthStringRU	KEYWORD2
 dayWeekStringRU	KEYWORD2
 monthShortStringRU	KEYWORD2
 dayWeekShortStringRU	KEYWORD2
+
+
+
+decodeUNIX	KEYWORD2
 
 #######################################
 # Constants (LITERAL1)
