@@ -16,6 +16,23 @@ const PROGMEM uint8_t UNIX_LAST_DAY_OF_MONTH[] = {31, 28, 31, 30, 31, 30, 31, 31
 
 struct TimeFunctions {
 	//
+	bool isAM(uint8_t h) {
+		return !isPM(h);  
+	}
+	
+	//
+	bool isPM(uint8_t h) {
+		return (h >= 12); 
+	}
+	
+	//
+	uint8_t hourFormat12(uint8_t h) {
+		if(h == 0 ) return 12;
+		else if(h > 12) return h - 12 ;
+		else return h ;
+	}
+	
+	//
 	bool everyH(uint8_t time_now, uint8_t time_last, uint8_t time_out) {
 		int8_t a = time_now;
 		if (time_out == 24 && time_last == a) return true;
@@ -56,39 +73,24 @@ struct TimeFunctions {
 	}
 	
 	//
-	uint16_t periodInDays(uint32_t unix_now, uint32_t last_unix) {
+	uint16_t periodInFullDays(uint32_t unix_now, uint32_t last_unix) {
 		return periodInSec(unix_now, last_unix) / 86400UL;
+	}
+	
+	//
+	uint16_t periodInDays(uint32_t unix_now, uint32_t last_unix) {
+		return (unix_now / 86400UL) - (last_unix / 86400UL);
 	}
 	
 	//
 	uint16_t periodInMonths(uint32_t unix_now, uint32_t last_unix) {
 		uint16_t year;
 		uint8_t month, day;
+		decodeUNIX(unix_now, day, month, year);
 		uint16_t year_last;
 		uint8_t month_last, day_last;
-		for (uint8_t i = 0; i < 2; i++) {// http://howardhinnant.github.io/date_algorithms.html#civil_from_days
-			yield();
-			uint32_t u;
-			if (i == 0) u = unix_now / 86400ul;
-			else u = last_unix / 86400ul;
-			u += 719468;
-			uint8_t era = u / 146097ul;
-			uint16_t doe = u - era * 146097ul;
-			uint16_t yoe = (doe - doe / 1460 + doe / 36524 - doe / 146096) / 365;
-			if (i == 0) year = yoe + era * 400;
-			else year_last = yoe + era * 400;
-			uint16_t doy = doe - (yoe * 365 + yoe / 4 - yoe / 100);
-			uint16_t mp = (doy * 5 + 2) / 153;
-			if (i == 0) {
-				day = doy - (mp * 153 + 2) / 5 + 1;
-				month = mp + (mp < 10 ? 3 : -9);
-				year += (month <= 2);
-			} else {
-				day_last = doy - (mp * 153 + 2) / 5 + 1;
-				month_last = mp + (mp < 10 ? 3 : -9);
-				year_last += (month_last <= 2);
-			}
-		}
+		decodeUNIX(last_unix, day_last, month_last, year_last);
+		
 		uint16_t p;
 	
 		p = (year - year_last) * 12;
@@ -109,6 +111,13 @@ struct TimeFunctions {
 	//
 	bool timeOutD(uint32_t unix_now, uint32_t last_unix, uint16_t time_out) {
 		uint16_t a = periodInDays(unix_now, last_unix);
+		if (a >= time_out) return true;
+		return false;
+	}
+	
+	//
+	bool timeOutFullDays(uint32_t unix_now, uint32_t last_unix, uint16_t time_out) {
+		uint16_t a = periodInFullDays(unix_now, last_unix);
 		if (a >= time_out) return true;
 		return false;
 	}
@@ -142,6 +151,40 @@ struct TimeFunctions {
 	
 	uint8_t lastDayOfMonth(uint8_t m, uint16_t y) {
 		return m != 2 || !isLeap(y) ? pgm_read_byte(&UNIX_LAST_DAY_OF_MONTH[m-1]) : 29u;
+	}
+	
+	void decodeUNIX(uint32_t unix, uint8_t& d, uint8_t& m, uint16_t& y) {
+        // http://howardhinnant.github.io/date_algorithms.html#civil_from_days
+        uint32_t u = unix / 86400ul;
+        u += 719468ul;
+        uint8_t era = u / 146097ul;
+        uint16_t doe = u - era * 146097ul;
+        uint16_t yoe = (doe - doe / 1460 + doe / 36524 - doe / 146096) / 365;
+        y = yoe + era * 400;
+        uint16_t doy = doe - (yoe * 365 + yoe / 4 - yoe / 100);
+        uint16_t mp = (doy * 5 + 2) / 153;
+        d = doy - (mp * 153 + 2) / 5 + 1;
+        m = mp + (mp < 10 ? 3 : -9);
+        y += (m <= 2);
+	}
+	
+	void decodeUNIX(uint32_t unix, uint8_t& d, uint8_t& m, uint16_t& y, uint16_t& h, uint16_t& min, uint16_t& s) {
+        s = unix % 60;
+        min = (unix % 3600UL) / 60UL;
+        h = (unix % 86400UL) / 3600UL;
+		decodeUNIX(unix, d, m, y);
+	}
+	
+	void delay(uint32_t t, void (*func)()) {
+		uint32_t a = micros();
+		while (t > 0) {
+			if (*func) func();
+			while (t > 0 && (micros() - a) >= 1000) {
+				t--;
+				a += 1000;
+			}
+			yield();
+		}
 	}
 	
     // отримати рядок часу формата ГГ:ХХ:СС

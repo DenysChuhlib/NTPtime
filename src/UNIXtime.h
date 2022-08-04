@@ -62,14 +62,14 @@ public:
     }
 
 	// установити часовий пояс
-    void setTimeZone(int8_t tz, int8_t tzM = 0) {
-        _tz = tz * 60L;
+    void setTimeZone(int8_t tz, int16_t tzM = 0) {
+        _tz = tz * 60UL;
 		_tz += tzM;
     }
 	
 	//
 	int16_t getTimeZoneM () {
-		return _tz + (_dst_wt * 60);
+		return _tz + (_dst_wt * 60UL);
 	}
 	
 	// установити літній час
@@ -133,21 +133,27 @@ public:
 					break;
 				}
 			}
-
-			if (unix() >= UNIXtime(_dst_wt_year, month_start, _dst_wt_day_Start, h_start, 0, 0, getTimeZoneM()).unix() &&
-				unix() < UNIXtime(_dst_wt_year, month_end, _dst_wt_day_End, h_end, 0, 0, getTimeZoneM() + (60 * (dst_or_wt ? 1 : -1))).unix()) {
-				if (dst_or_wt) setSummerTime();
-				else setWinterTime();
-				return 1;
-			}
 		}
 
-		if (onDate(_dst_wt_day_Start, month_start, _dst_wt_year) && onTime(h_start, 0, 0) && getDST() == 0){
+		if (getDST() == 0 && onDate(_dst_wt_day_Start, month_start, _dst_wt_year) && onTime(h_start, 0, 0)){
 			if (dst_or_wt) setSummerTime();
 			else setWinterTime();
 			return 1;
 		}
-		if (onDate(_dst_wt_day_End, month_end, _dst_wt_year) && onTime(h_end, 0, 0) && getDST() == (dst_or_wt ? 1 : -1)) {
+		else if (getDST() == (dst_or_wt ? 1 : -1) && onDate(_dst_wt_day_End, month_end, _dst_wt_year) && onTime(h_end, 0, 0)) {
+			setStandardTime();
+			return 1;
+		}
+		
+		else if (month() >= month_start && month() <= month_end &&
+			unix() >= UNIXtime(_dst_wt_year, month_start, _dst_wt_day_Start, h_start, 0, 0, getTimeZoneM()).unix() &&
+			unix() < UNIXtime(_dst_wt_year, month_end, _dst_wt_day_End, h_end, 0, 0, getTimeZoneM() + (60 * (dst_or_wt ? 1 : -1))).unix()) {
+			if (getDST() == 0) {
+				if (dst_or_wt) setSummerTime();
+				else setWinterTime();
+				return 1;
+			}
+		} else if (getDST() == (dst_or_wt ? 1 : -1)) {
 			setStandardTime();
 			return 1;
 		}
@@ -215,9 +221,9 @@ public:
 		if (_time) {
 			// захист від переповнення різниці через 50 діб
 			uint32_t diff = millis() - _last_upd;
-			if (diff > 129600000ul) {	//1,5 доби
-				_unix += diff / 1000ul;
-				_last_upd = millis() - diff % 1000ul;
+			if (diff > 129600000UL) {	//1,5 доби
+				_unix += diff / 1000UL;
+				_last_upd = millis() - diff % 1000UL;
 			}
 			return diff;
 		} else {
@@ -227,12 +233,12 @@ public:
 
     // unix час відносно грінвіча
     uint32_t unixGMT() {
-        return _unix + (msFromUpdate() / 1000ul);
+        return _unix + (msFromUpdate() / 1000UL);
     }
 	
 	// unix час відносно даного time zone
     uint32_t unix() {
-        return unixGMT() + _tz * 60L + (_dst_wt * 3600L);
+        return unixGMT() + _tz * 60UL + (_dst_wt * 3600UL);
     }
 	
 	// мілісекунди
@@ -247,12 +253,12 @@ public:
 
     // отримати хвилини
     uint8_t minute() {
-        return (unix() % 3600ul) / 60ul;
+        return (unix() % 3600UL) / 60UL;
     }
 
     // отримати години
     uint8_t hour() {
-        return (unix() % 86400ul) / 3600ul;
+        return (unix() % 86400UL) / 3600UL;
     }
 
     // отримати день місяця
@@ -275,10 +281,25 @@ public:
 
     // отримати день тижня
     uint8_t dayWeek() {
-        uint8_t _dayw = ((unix() / 86400ul) + 4) % 7;
+        uint8_t _dayw = ((unix() / 86400UL) + 4) % 7;
         if (!_dayw) _dayw = 7;
         return _dayw;
     }
+	
+	//
+	bool isAM() {
+		return TimeFunc.isAM(hour());
+	}
+	
+	//
+	bool isPM() {
+		return TimeFunc.isPM(hour());
+	}
+	
+	//
+	uint8_t hourFormat12() {
+		return TimeFunc.hourFormat12(hour());
+	}
 	
 	//
 	bool onTime (uint8_t h, uint8_t m, uint8_t s) {
@@ -308,191 +329,123 @@ public:
 	
 	//========================================================================
 	bool everyH(uint8_t time_last, uint8_t time_out) {
-		//int8_t a = hour();
-		//if (time_out == 24 && time_last == a) return true;
-		//a -= time_last;
-		//if (a < 0) a = -a;
-		//if (a >= time_out) return true;
-		//return false;
 		return TimeFunc.everyH(hour(), time_last, time_out);
 	}
 	
 	//
 	bool everyM(uint8_t time_last, uint8_t time_out) {
-		//int8_t a = minute();
-		//if (time_out == 60 && time_last == a) return true;
-		//a -= time_last;
-		//if (a < 0) a = -a;
-		//if (a >= time_out) return true;
-		//return false;
 		return TimeFunc.everyM(minute(), time_last, time_out);
 	}
 	
 	//
 	bool everyS(uint8_t time_last, uint8_t time_out) {
-		//int8_t a = second();
-		//if (time_out == 60 && time_last == a) return true;
-		//a -= time_last;
-		//if (a < 0) a = -a;
-		//if (a >= time_out) return true;
-		//return false;
 		return TimeFunc.everyS(second(), time_last, time_out);
 	}
 	
 	//
 	bool everyMs(uint16_t time_last, uint16_t time_out) {
-		//int16_t a = ms();
-		//if (time_out == 1000 && time_last == a) return true;
-		//a -= time_last;
-		//if (a < 0) a = -a;
-		//if (a >= time_out) return true;
-		//return false;
 		return TimeFunc.everyMs(ms(), time_last, time_out);
 	}
 	
 	//========================================================================
 	uint32_t periodInSec(uint32_t last_unix) {
-		//return unix() - last_unix;
 		return TimeFunc.periodInSec(unix(), last_unix);
 	}
 	
 	//
+	uint16_t periodInFullDays(uint32_t last_unix) {
+		return TimeFunc.periodInFullDays(unix(), last_unix);
+	}
+	
+	//
 	uint16_t periodInDays(uint32_t last_unix) {
-		//return periodInSec(last_unix) / 86400UL;
 		return TimeFunc.periodInDays(unix(), last_unix);
 	}
 	
 	//
 	uint16_t periodInMonths(uint32_t last_unix) {
-		//UNIXtime t(last_unix);
-		//uint16_t p;
-		//
-		//p = (year() - t.year()) * 12;
-		//p += month() - t.month();
-		//if (day() < t.day()) {
-		//	p--;
-		//}
-		//return p;
 		return TimeFunc.periodInMonths(unix(), last_unix);
 	}
 	
 	//========================================================================
 	bool timeOutMonth(uint32_t last_unix, uint16_t time_out) {
-		//uint16_t a = periodInMonths(last_unix);
-		//if (a >= time_out) return true;
-		//return false;
 		return TimeFunc.timeOutMonth(unix(), last_unix, time_out);
 	}
 	
 	//
 	bool timeOutD(uint32_t last_unix, uint16_t time_out) {
-		//uint16_t a = periodInDays(last_unix);
-		//if (a >= time_out) return true;
-		//return false;
 		return TimeFunc.timeOutD(unix(), last_unix, time_out);
 	}
 	
 	//
+	bool timeOutFullDays(uint32_t last_unix, uint16_t time_out) {
+		return TimeFunc.timeOutFullDays(unix(), last_unix, time_out);
+	}
+	
+	//
 	bool timeOutH(uint32_t last_unix, uint16_t time_out) {
-		//uint16_t a = periodInSec(last_unix);
-		//time_out = time_out * 3600;
-		//if (a >= time_out) return true;
-		//return false;
 		return TimeFunc.timeOutH(unix(), last_unix, time_out);
 	}
 	
 	//
 	bool timeOutM(uint32_t last_unix, uint16_t time_out) {
-		//uint16_t a = periodInSec(last_unix);
-		//time_out = time_out * 60;
-		//if (a >= time_out) return true;
-		//return false;
 		return TimeFunc.timeOutM(unix(), last_unix, time_out);
 	}
 	
 	//
 	bool timeOutS(uint32_t last_unix, uint16_t time_out) {
-		//uint16_t a = periodInSec(last_unix);
-		//if (a >= time_out) return true;
-		//return false;
 		return TimeFunc.timeOutS(unix(), last_unix, time_out);
 	}
 	
 	bool isLeap() {
-		//y = year();
-		//return  y % 4 == 0 && (y % 100 != 0 || y % 400 == 0);
 		return TimeFunc.isLeap(year());
 	}
 	
 	uint8_t lastDayOfMonth() {
-		//m = month();
-		//y = year();
-		//return m != 2 || !isLeap(y) ? pgm_read_byte(&UNIX_LAST_DAY_OF_MONTH[m-1]) : 29u;
 		return TimeFunc.lastDayOfMonth(month(), year());
+	}
+	
+	void delay(uint32_t t, void (*func)() = NULL) {
+		uint32_t a = micros();
+		while (t > 0) {
+			if (*func) func();
+			if (_time) msFromUpdate();
+			while (t > 0 && (micros() - a) >= 1000) {
+				t--;
+				a += 1000;
+			}
+			yield();
+		}
 	}
 	
     // отримати рядок часу формата ГГ:ХХ:СС
     String timeString() {
-        //String str;
-        //str.reserve(8);
-        //if (hour() < 10) str += '0';
-        //str += hour();
-        //str += ':';
-        //if (minute() < 10) str += '0';
-        //str += minute();
-        //str += ':';
-        //if (second() < 10) str += '0';
-        //str += second();
-        //return str;
 		return TimeFunc.timeString(hour(), minute(), second());
     }
 
     // отримати рядок дати формата ДД.ММ.РРРР
     String dateString() {
-        //String str;
-        //str.reserve(10);
-		//decodeTime();
-        //if (_day < 10) str += '0';
-        //str += _day;
-        //str += '.';
-        //if (_month < 10) str += '0';
-        //str += _month;
-        //str += '.';
-        //str += _year;
-        //return str;
 		decodeTime();
 		return TimeFunc.dateString(_day, _month, _year);
     }
 	
 	//========================================================================
     String monthString() {
-		//m = month();
-        //String str = (const char*)pgm_read_byte(&UNIX_MONTH_NAMES_EN[m-1]);
-        //return str;
 		return TimeFunc.monthString(month());
     }
 	
 	//
     String dayWeekString() {
-		//wd = dayWeek();
-        //String str = (const char*)pgm_read_byte(&UNIX_DAY_NAMES_EN[wd-1]);
-        //return str;
 		return TimeFunc.dayWeekString(dayWeek());
     }
 	
 	//
     String monthShortString() {
-		//m = month();
-        //String str = (const char*)pgm_read_byte(&UNIX_MONTH_SHORT_NAMES_EN[m-1]);
-        //return str;
 		return TimeFunc.monthShortString(month());
     }
 	
 	//
     String dayWeekShortString() {
-		//wd = dayWeek();
-        //String str = (const char*)pgm_read_byte(&UNIX_DAY_SHORT_NAMES_EN[wd-1]);
-        //return str;
 		return TimeFunc.dayWeekShortString(dayWeek());
     }
 	

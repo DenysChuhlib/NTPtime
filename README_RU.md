@@ -143,6 +143,10 @@ uint16_t year();                                                // получи�
 
 uint8_t dayWeek();                                              // получить день недели
 
+bool isAM();
+bool isPM();
+uint8_t hourFormat12();
+
 bool onTime (uint8_t h, uint8_t m, uint8_t s);                  // название функции говорит само за себя
 
 bool onDate (uint8_t d, uint8_t m, uint8_t y);                  // название функции говорит само за себя
@@ -158,6 +162,7 @@ bool everyMs(uint16_t time_last, uint16_t time_out);            // (time_last - 
 
 uint32_t periodInSec(uint32_t last_unix);                       // период в секундах (last_unix – последний сохраненный unix())
 uint16_t periodInDays(uint32_t last_unix);
+uint16_t periodInFullDays(uint32_t last_unix);
 uint16_t periodInMonths(uint32_t last_unix);
 
 bool timeOutMonth(uint32_t unix_now, uint32_t last_unix, uint16_t time_out);    // если период больше или равен таймауту, то возвращает true
@@ -191,8 +196,16 @@ String dayWeekShortStringRU();
 ```
 <a id="TimeFunc"></a>
 ### TimeFunc
-Просто ```cpp TimeFunc.isLeap(uint16_t y); ``` и все.
+Просто 
 ```cpp
+ TimeFunc.isLeap(uint16_t y);
+``` и все.
+
+```cpp
+
+bool isAM(uint8_t h);
+bool isPM(uint8_t h);
+uint8_t hourFormat12(uint8_t h);
 
 bool everyH(uint8_t time_now, uint8_t time_last, uint8_t time_out);     // простые и маленькие таймеры (time_last - последний сохраненный hour()) (time_out от 0 до 24)
 bool everyM(uint8_t time_now, uint8_t time_last, uint8_t time_out);     // (time_last – последний сохраненная минута) (time_out от 0 до 60)
@@ -201,6 +214,7 @@ bool everyMs(uint16_t time_now, uint16_t time_last, uint16_t time_out); // (time
 
 uint32_t periodInSec(uint32_t unix_now, uint32_t last_unix);    // период в секундах (last_unix – последний сохраненный unix())
 uint16_t periodInDays(uint32_t unix_now, uint32_t last_unix);
+uint16_t periodInFullDays(uint32_t unix_now, uint32_t last_unix);
 uint16_t periodInMonths(uint32_t unix_now, uint32_t last_unix);
 
 bool timeOutMonth(uint32_t unix_now, uint32_t last_unix, uint16_t time_out);    // если период больше или равен таймауту, то возвращает true
@@ -231,6 +245,11 @@ String monthStringRU(uint8_t m);
 String dayWeekStringRU(uint8_t wd);
 String monthShortStringRU(uint8_t m);
 String dayWeekShortStringRU(uint8_t wd);
+
+void decodeUNIX(uint32_t unix, uint8_t& d, uint8_t& m, uint16_t& y);	// быстрое декодирование
+void decodeUNIX(uint32_t unix, uint8_t& d, uint8_t& m, uint16_t& y, uint16_t& h, uint16_t& min, uint16_t& s);
+
+void delay(uint32_t t, void (*func)());		// с функцией выполняемой при задержке (например, TimeFunc.delay(1000, Loop);)
 
 ```
 
@@ -325,3 +344,12 @@ void loop() {
 ## Версии
 - v1.0
 - v1.1.0
+– v1.1.1
+    - оптимизация
+    - добавлены новые функции
+        - `periodInFullDays();`
+        - `isAM();`
+        - `isPM();`
+        - `hourFormat12();`
+        - `decodeUNIX();` - быстрое декодирование
+        - `delay()` с функцией выполняемой при задержке

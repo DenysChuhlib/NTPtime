@@ -79,7 +79,7 @@ public:
 	
 	// обновити час в Г, Х, С
 	bool updateOnTime(uint8_t h, uint8_t m, uint8_t s) {
-        if (onTime(h, m ,s) && msFromUpdate() >= 5000) {
+        if (onTime(h, m ,s) && msFromUpdate() >= 5000UL) {
 			updateNow();
 			return 1;
 		}
@@ -88,8 +88,11 @@ public:
 
 	// ============== TICK ===============
     // обновляє час по власному таймеру
-    bool tick(uint16_t prd = 0) {
-		if (prd >= 60 && prd <= 86400 && msFromUpdate() >= prd  * 1000) setTimeStat(UNIX_NOT_SYNCHRONIZED);
+    bool tick(uint32_t prd = 0) {
+		if (prd) {
+			prd = constrain(prd, 60, 86400UL);
+			if (msFromUpdate() >= prd  * 1000UL) setTimeStat(UNIX_NOT_SYNCHRONIZED);
+		}
 		
 		if (_ntp_stat != NTP_NOT_STARTED && _time_stat == UNIX_NOT_SYNCHRONIZED) {
 			do {
@@ -160,12 +163,15 @@ private:
 			if (udp.parsePacket() != 48 || udp.remotePort() != _NTPtime_NTP_PORT) {
 				if (millis() - _way > _NTPtime_NTP_TIMEOUT) {
 					_send_pack = false;
+					_way = millis() - _way;
+					_ping = _way;
 					return 6;
 				}
 			} else {
 				udp.read(buf, 48);             // читаємо
-				if (buf[40] == 0 || buf[40] < 98) {  	// некоректний час
+				if (buf[40] < 98) {  	// некоректний час (if (unix < 1644167168) error)
 					_send_pack = false;
+					_ping = -1;
 					return 7;
 				}
 				_last_upd = millis();                   // запам'ятали час оновлення
@@ -177,7 +183,7 @@ private:
 				_way = _ping / 2;					// середній шлях в одну сторону
 				_last_upd -= (a_ms + _way);      	// затримка часу
 				_unix = (uint32_t)(buf[40] << 8 | buf[41]) << 16 | (buf[42] << 8 | buf[43]); // 1900
-				_unix -= 2208988800ul;              // переводимо в UNIX (1970)
+				_unix -= 2208988800UL;              // переводимо в UNIX (1970)
 				_send_pack = false;
 				setTimeStat(UNIX_OK);
 				#ifdef NTPtimeClockStrata_val
