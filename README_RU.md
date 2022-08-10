@@ -171,9 +171,11 @@ bool timeOutH(uint32_t last_unix, uint16_t time_out);
 bool timeOutM(uint32_t last_unix, uint16_t time_out);
 bool timeOutS(uint32_t last_unix, uint16_t time_out);
 
-bool isLeap();                                                  // если високосный год возвращает true (если y = 0 то считает данный год)
+bool isLeap();                                                  // если високосный год возвращает true
 
-uint8_t lastDayOfMonth();                                       // последний день месяца (если ь = 0 то считает данный месяц) (если y = 0 то считает данный год)
+uint8_t lastDayOfMonth();                                       // последний день месяца
+
+void delay(uint32_t t, void (*func)());							// с функцией выполняемой при задержке
 
 String timeString();                                            // получить строчку времени формата ГГ:ХХ:СС
 

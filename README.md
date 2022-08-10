@@ -178,7 +178,9 @@ bool timeOutS(uint32_t last_unix, uint16_t time_out);
 
 bool isLeap();							// якщо високосний рік то повертає true
 
-uint8_t lastDayOfMonth();					// останній день місяця
+uint8_t lastDayOfMonth();					// останній день місяця 
+
+void delay(uint32_t t, void (*func)());		// з функцією яка виконуеться підчас затримки)
 
 String timeString();						// отримати рядок часу формата ГГ:ХХ:СС
 
