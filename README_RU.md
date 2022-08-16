@@ -198,10 +198,12 @@ String dayWeekShortStringRU();
 ```
 <a id="TimeFunc"></a>
 ### TimeFunc
-Просто 
+Просто
+
 ```cpp
  TimeFunc.isLeap(uint16_t y);
-``` и все.
+``` 
+и все.
 
 ```cpp
 
