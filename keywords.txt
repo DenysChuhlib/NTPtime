@@ -16,12 +16,17 @@ Timer	KEYWORD1
 
 TimeFunc	KEYWORD1
 
+NTPtimeClockStrata_val	KEYWORD1
+NTPtimeEthernet	KEYWORD1
+
 #######################################
 # Methods and Functions (KEYWORD2)
 #######################################
 
 setPeriod	KEYWORD2
 setHost	KEYWORD2
+setPort KEYWORD2
+setTimeout	KEYWORD2
 begin	KEYWORD2
 end	KEYWORD2
 asyncMode	KEYWORD2
@@ -119,9 +124,6 @@ decodeUNIX	KEYWORD2
 #######################################
 # Constants (LITERAL1)
 #######################################
-
-NTPtimeClockStrata_val	LITERAL1
-NTPtimeEthernetUdp	LITERAL1
 
 NTP_OK	LITERAL1
 NTP_NOT_STARTED	LITERAL1

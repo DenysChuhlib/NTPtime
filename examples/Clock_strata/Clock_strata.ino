@@ -3,7 +3,7 @@
 //#include <WiFi.h>       // esp32
 
 //#include <Ethernet.h>
-//#define NTPtimeEthernetUdp   //Ethernet
+//#define NTPtimeEthernet   //Ethernet
 
 uint8_t Clock_strata; //https://en.wikipedia.org/wiki/Network_Time_Protocol#Clock_strata
 #define NTPtimeClockStrata_val Clock_strata

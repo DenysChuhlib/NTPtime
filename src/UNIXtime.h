@@ -224,6 +224,7 @@ public:
 			if (diff > 129600000UL) {	//1,5 доби
 				_unix += diff / 1000UL;
 				_last_upd = millis() - diff % 1000UL;
+				setTimeStat(UNIX_NOT_SYNCHRONIZED);
 			}
 			return diff;
 		} else {

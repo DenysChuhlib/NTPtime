@@ -10,9 +10,6 @@ MIT License
 
 #include "UNIXtime.h"
 
-#define _NTPtime_NTP_TIMEOUT 64000
-#define _NTPtime_NTP_PORT 123
-
 #define NTP_OK 0
 #define NTP_NOT_STARTED 1
 #define NTP_NOT_CONNECTED_WIFI 2
@@ -24,12 +21,20 @@ MIT License
 
 const PROGMEM char* _NTPtime_DEFAULT_HOST = "pool.ntp.org";
 
-#ifndef NTPtimeEthernetUdp
-#include <WiFiUdp.h>
+#ifndef NTPtimeEthernet
+//
+#ifdef ESP8266
+#include <ESP8266WiFi.h>
 #else
+#include <WiFi.h>
+#endif
+//
+#include <WiFiUdp.h>
+#else//
+#include <Ethernet.h>
 #include <EthernetUdp.h>
 #define NTP_NOT_CONNECTED_Ethernet 2
-#endif
+#endif//
 
 /*example
 uint8_t Clock_strata;
@@ -51,12 +56,20 @@ public:
     }
 
     // установити хост (за умвч. pool.ntp.org)
-    void setHost(const char* host) {
+    void setHost(const String& host) {
         _host = host;
     }
+	
+	void setPort(uint16_t port) {
+		_port = port;
+	}
+	
+	void setTimeout(uint16_t timeout) {
+		_timeout = constrain(timeout, 200, 64000);
+	}
 
     // запустити
-    bool begin(uint16_t port = _NTPtime_NTP_PORT) {
+    bool begin(uint16_t port = 123) {
         _ntp_stat = !udp.begin(port);
 		return !_ntp_stat;
     }
@@ -92,7 +105,7 @@ public:
 		if (prd) {
 			prd = constrain(prd, 60, 86400UL);
 			if (msFromUpdate() >= prd  * 1000UL) setTimeStat(UNIX_NOT_SYNCHRONIZED);
-		}
+		} else msFromUpdate();// перевірка переповнення
 		
 		if (_ntp_stat != NTP_NOT_STARTED && _time_stat == UNIX_NOT_SYNCHRONIZED) {
 			do {
@@ -103,7 +116,7 @@ public:
 			
 			return 1;
 		} else if (_time_stat == UNIX_NOT_STARTED || _ntp_stat == NTP_NOT_STARTED) {
-			if (_send_pack) _send_pack = false;
+			_send_pack = false;
 		}
         return 0;
     }
@@ -142,7 +155,7 @@ private:
 	// запитати і обновити час з сервера
     uint8_t requestTime() {
 		uint8_t buf[48];
-		#ifndef NTPtimeEthernetUdp
+		#ifndef NTPtimeEthernet
 		if (!WiFi.isConnected()) return 2;
 		#else
 		if (Ethernet.linkStatus() == LinkOFF || Ethernet.hardwareStatus() == EthernetNoHardware) return 2;
@@ -152,38 +165,41 @@ private:
 			//https://en.wikipedia.org/wiki/Network_Time_Protocol, https://ru.wikipedia.org/wiki/NTP
 			buf[0] = 0b11100011;                    // LI 0x3, v4, client
 			buf[2] = 6; 							//таймаут 2^6 = 64 секунд
-			buf[3] = 0xEC; 							//точність -20 - двійковий логарифм секунд
-			if (!udp.beginPacket(_host, _NTPtime_NTP_PORT)) return 3;
+			if (!udp.beginPacket(_host.c_str(), _port)) return 3;
 			udp.write(buf, 48);
 			if (!udp.endPacket()) return 4;
 			_way = millis();
 			_send_pack = true;
 		}
 		if (_send_pack) {//перевіряємо чи був ли відправлений запит
-			if (udp.parsePacket() != 48 || udp.remotePort() != _NTPtime_NTP_PORT) {
-				if (millis() - _way > _NTPtime_NTP_TIMEOUT) {
+			if (udp.parsePacket() != 48 || udp.remotePort() != _port) {
+				if (millis() - _way > (uint32_t)_timeout) {
 					_send_pack = false;
-					_way = millis() - _way;
-					_ping = _way;
+					_ping = -1;
 					return 6;
 				}
 			} else {
-				udp.read(buf, 48);             // читаємо
-				if (buf[40] < 98) {  	// некоректний час (if (unix < 1644167168) error)
+				udp.read(buf, 48);             		// читаємо
+				uint32_t got_time = millis();       // запам'ятали час оновлення
+				uint16_t serv_ms = ((buf[44] << 8) | buf[45]) * 1000L >> 16;						// мс сервера
+				int16_t ser_del = (int16_t)serv_ms - (((buf[36] << 8) | buf[37]) * 1000L >> 16);	// мс затримки сервера
+				if (ser_del < 0) ser_del += 1000;   // перехід через секунду
+				_way = millis() - _way;				// весь шлях пакета і затримка сервера (фактично це пінг, але пакет NTP більший ніж пакет ping і тому затримка сервера більша)
+				int16_t ping = _way - ser_del;		// нинішній пінг (шлях пакета, або RTT)
+				_way = ping / 2;					// середній шлях в одну сторону
+				got_time -= (serv_ms + _way);      	// затримка часу
+				uint32_t unix = (uint32_t)(buf[40] << 8 | buf[41]) << 16 | (buf[42] << 8 | buf[43]); // 1900
+				unix -= 2208988800UL;              // переводимо в UNIX (1970)
+				
+				if (unix < 1662757200ul) {  		// некоректний час
 					_send_pack = false;
 					_ping = -1;
 					return 7;
 				}
-				_last_upd = millis();                   // запам'ятали час оновлення
-				uint16_t a_ms = ((buf[44] << 8) | buf[45]) * 1000L >> 16;						// мс сервера
-				int16_t ser_del = (int16_t)a_ms - (((buf[36] << 8) | buf[37]) * 1000L >> 16);	// мс затримки сервера
-				if (ser_del < 0) ser_del += 1000;   // перехід через секунду
-				_way = millis() - _way;				// весь шлях пакета і затримка сервера (фактично це пінг, але пакет NTP більший ніж пакет ping і тому затримка сервера більша)
-				_ping = _way - ser_del;				// нинішній пінг (шлях пакета, або RTT)
-				_way = _ping / 2;					// середній шлях в одну сторону
-				_last_upd -= (a_ms + _way);      	// затримка часу
-				_unix = (uint32_t)(buf[40] << 8 | buf[41]) << 16 | (buf[42] << 8 | buf[43]); // 1900
-				_unix -= 2208988800UL;              // переводимо в UNIX (1970)
+				
+				_ping = ping;
+				_last_upd = got_time;
+				_unix = unix;
 				_send_pack = false;
 				setTimeStat(UNIX_OK);
 				#ifdef NTPtimeClockStrata_val
@@ -195,12 +211,14 @@ private:
 		return 5;
     }
 	
-	#ifndef NTPtimeEthernetUdp
+	#ifndef NTPtimeEthernet
 	WiFiUDP udp;
 	#else
 	EthernetUDP udp;
 	#endif
-    const char* _host = _NTPtime_DEFAULT_HOST;
+    String _host = FPSTR(_NTPtime_DEFAULT_HOST);
+	uint16_t _port = 123;
+	uint16_t _timeout = 64000;
 
 	bool _async : 1 = 1;
 	bool _send_pack : 1 = 0;
