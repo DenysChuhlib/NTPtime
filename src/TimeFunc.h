@@ -14,6 +14,16 @@ const PROGMEM uint8_t UNIX_LAST_DAY_OF_MONTH[] = {31, 28, 31, 30, 31, 30, 31, 31
 #include "languages/ua.h"
 #include "languages/ru.h"
 
+#ifdef UNIX64
+typedef int64_t unix_t;
+
+typedef int64_t year_t;
+#else
+typedef uint32_t unix_t;
+
+typedef uint16_t year_t;
+#endif
+
 struct TimeFunctions {
 	//
 	bool isAM(uint8_t h) {
@@ -30,6 +40,20 @@ struct TimeFunctions {
 		if(h == 0 ) return 12;
 		else if(h > 12) return h - 12 ;
 		else return h ;
+	}
+	
+	unix_t nextDays(unix_t unix, unix_t n) {
+		unix += (unix_t)86400UL * n;
+	}
+	unix_t nextDay(unix_t unix) {
+		unix += 86400UL;
+	}
+	
+	unix_t prevDays(unix_t unix, unix_t n) {
+		unix -= (unix_t)86400UL * n;
+	}
+	unix_t prevDay(unix_t unix) {
+		unix -= 86400UL;
 	}
 	
 	//
@@ -68,30 +92,30 @@ struct TimeFunctions {
 	}
 	
 	//
-	uint32_t periodInSec(uint32_t unix_now, uint32_t last_unix) {
+	unix_t periodInSec(unix_t unix_now, unix_t last_unix) {
 		return unix_now - last_unix;
 	}
 	
 	//
-	uint16_t periodInFullDays(uint32_t unix_now, uint32_t last_unix) {
+	unix_t periodInFullDays(unix_t unix_now, unix_t last_unix) {
 		return periodInSec(unix_now, last_unix) / 86400UL;
 	}
 	
 	//
-	uint16_t periodInDays(uint32_t unix_now, uint32_t last_unix) {
+	unix_t periodInDays(unix_t unix_now, unix_t last_unix) {
 		return (unix_now / 86400UL) - (last_unix / 86400UL);
 	}
 	
 	//
-	uint16_t periodInMonths(uint32_t unix_now, uint32_t last_unix) {
-		uint16_t year;
+	unix_t periodInMonths(unix_t unix_now, unix_t last_unix) {
+		year_t year;
 		uint8_t month, day;
 		decodeUNIX(unix_now, day, month, year);
-		uint16_t year_last;
+		year_t year_last;
 		uint8_t month_last, day_last;
 		decodeUNIX(last_unix, day_last, month_last, year_last);
 		
-		uint16_t p;
+		year_t p;
 	
 		p = (year - year_last) * 12;
 		p += month - month_last;
@@ -102,62 +126,70 @@ struct TimeFunctions {
 	}
 	
 	//========================================================================
-	bool timeOutMonth(uint32_t unix_now, uint32_t last_unix, uint16_t time_out) {
-		uint16_t a = periodInMonths(unix_now, last_unix);
+	bool timeOutMonth(unix_t unix_now, unix_t last_unix, unix_t time_out) {
+		uint32_t a = periodInMonths(unix_now, last_unix);
 		if (a >= time_out) return true;
 		return false;
 	}
 	
 	//
-	bool timeOutD(uint32_t unix_now, uint32_t last_unix, uint16_t time_out) {
-		uint16_t a = periodInDays(unix_now, last_unix);
+	bool timeOutD(unix_t unix_now, unix_t last_unix, unix_t time_out) {
+		uint32_t a = periodInDays(unix_now, last_unix);
 		if (a >= time_out) return true;
 		return false;
 	}
 	
 	//
-	bool timeOutFullDays(uint32_t unix_now, uint32_t last_unix, uint16_t time_out) {
-		uint16_t a = periodInFullDays(unix_now, last_unix);
+	bool timeOutFullDays(unix_t unix_now, unix_t last_unix, unix_t time_out) {
+		uint32_t a = periodInFullDays(unix_now, last_unix);
 		if (a >= time_out) return true;
 		return false;
 	}
 	
 	//
-	bool timeOutH(uint32_t unix_now, uint32_t last_unix, uint16_t time_out) {
-		uint16_t a = periodInSec(unix_now, last_unix);
+	bool timeOutH(unix_t unix_now, unix_t last_unix, unix_t time_out) {
+		unix_t a = periodInSec(unix_now, last_unix);
 		time_out = time_out * 3600;
 		if (a >= time_out) return true;
 		return false;
 	}
 	
 	//
-	bool timeOutM(uint32_t unix_now, uint32_t last_unix, uint16_t time_out) {
-		uint16_t a = periodInSec(unix_now, last_unix);
+	bool timeOutM(unix_t unix_now, unix_t last_unix, unix_t time_out) {
+		unix_t a = periodInSec(unix_now, last_unix);
 		time_out = time_out * 60;
 		if (a >= time_out) return true;
 		return false;
 	}
 	
 	//
-	bool timeOutS(uint32_t unix_now, uint32_t last_unix, uint16_t time_out) {
-		uint16_t a = periodInSec(unix_now, last_unix);
+	bool timeOutS(unix_t unix_now, unix_t last_unix, unix_t time_out) {
+		unix_t a = periodInSec(unix_now, last_unix);
 		if (a >= time_out) return true;
 		return false;
 	}
 	
-	bool isLeap(uint16_t y) {
+	bool isLeap(year_t y) {
 		return  y % 4 == 0 && (y % 100 != 0 || y % 400 == 0);
 	}
 	
-	uint8_t lastDayOfMonth(uint8_t m, uint16_t y) {
+	uint8_t lastDayOfMonth(uint8_t m, year_t y) {
 		return m != 2 || !isLeap(y) ? pgm_read_byte(&UNIX_LAST_DAY_OF_MONTH[m-1]) : 29u;
 	}
 	
-	void decodeUNIX(uint32_t unix, uint8_t& d, uint8_t& m, uint16_t& y) {
+	unix_t unixGMTFromDate(year_t y, uint8_t m, uint8_t d, uint8_t h, uint8_t mn, uint8_t s, int16_t tzM) {
+		int8_t my = (m >= 3) ? 1 : 0;
+		y += my - 1970;
+		uint16_t dm = 0;
+		for (int i = 0; i < m - 1; i++) dm += (i<7)?((i==1)?28:((i&1)?30:31)):((i&1)?31:30);
+		return (((d-1+dm+((y+1)>>2)-((y+69)/100)+((y+369)/100/4)+365*(y-my))*24ul+h-(tzM/60))*60ul+mn-(tzM%60))*60ul+s;
+	}
+	
+	void decodeUNIX(unix_t unix, uint8_t& d, uint8_t& m, year_t& y) {
         // http://howardhinnant.github.io/date_algorithms.html#civil_from_days
-        uint32_t u = unix / 86400ul;
+        unix_t u = unix / 86400ul;
         u += 719468ul;
-        uint8_t era = u / 146097ul;
+        unix_t era = (u >= 0 ? u : u - 146096) / 146097;
         uint16_t doe = u - era * 146097ul;
         uint16_t yoe = (doe - doe / 1460 + doe / 36524 - doe / 146096) / 365;
         y = yoe + era * 400;
@@ -168,11 +200,17 @@ struct TimeFunctions {
         y += (m <= 2);
 	}
 	
-	void decodeUNIX(uint32_t unix, uint8_t& d, uint8_t& m, uint16_t& y, uint16_t& h, uint16_t& min, uint16_t& s) {
+	void decodeUNIX(unix_t unix, uint8_t& d, uint8_t& m, year_t& y, uint8_t& h, uint8_t& min, uint8_t& s) {
         s = unix % 60;
         min = (unix % 3600UL) / 60UL;
         h = (unix % 86400UL) / 3600UL;
 		decodeUNIX(unix, d, m, y);
+	}
+	
+	uint8_t dayWeek(unix_t unix) {
+		uint8_t _dayw = ((unix / 86400UL) + 4) % 7;
+        if (!_dayw) _dayw = 7;
+        return _dayw;
 	}
 	
 	void delay(uint32_t t, void (*func)()) {
@@ -203,7 +241,7 @@ struct TimeFunctions {
     }
 
     // отримати рядок дати формата ДД.ММ.РРРР
-    String dateString(uint8_t d, uint8_t m, uint8_t y) {
+    String dateString(uint8_t d, uint8_t m, year_t y) {
         String str;
         str.reserve(10);
         if (d < 10) str += '0';

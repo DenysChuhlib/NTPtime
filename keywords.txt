@@ -16,6 +16,8 @@ Timer	KEYWORD1
 
 TimeFunc	KEYWORD1
 
+DSTime	KEYWORD1
+
 NTPtimeClockStrata_val	KEYWORD1
 NTPtimeEthernet	KEYWORD1
 
@@ -40,6 +42,9 @@ NTPstatus	KEYWORD2
 setUnixGMT	KEYWORD2
 setUnixFromDate	KEYWORD2
 
+addUnix	KEYWORD2
+subtractUnix	KEYWORD2
+
 setTimeZone	KEYWORD2
 getTimeZoneM	KEYWORD2
 
@@ -48,12 +53,20 @@ setSummerTime	KEYWORD2
 setWinterTime	KEYWORD2
 setStandardTime	KEYWORD2
 getDST	KEYWORD2
+
+setDSTauto	KEYWORD2
+delDSTauto	KEYWORD2
+DSTauto	KEYWORD2
 DST	KEYWORD2
+DSTstartInGMT	KEYWORD2
+DSTendInGMT	KEYWORD2
 
 status	KEYWORD2
 
 startTime	KEYWORD2
 stopTime	KEYWORD2
+
+isRunning	KEYWORD2
 
 msFromUpdate	KEYWORD2
 unix	KEYWORD2
@@ -72,6 +85,11 @@ isAM	KEYWORD2
 isPM	KEYWORD2
 
 hourFormat12	KEYWORD2
+
+nextDays	KEYWORD2
+nextDay	KEYWORD2
+prevDays	KEYWORD2
+prevDay	KEYWORD2
 
 onTime	KEYWORD2
 onDate	KEYWORD2
@@ -117,13 +135,15 @@ dayWeekStringRU	KEYWORD2
 monthShortStringRU	KEYWORD2
 dayWeekShortStringRU	KEYWORD2
 
-
+unixGMTFromDate	KEYWORD2
 
 decodeUNIX	KEYWORD2
 
 #######################################
 # Constants (LITERAL1)
 #######################################
+unix_t	LITERAL1
+year_t	LITERAL1
 
 NTP_OK	LITERAL1
 NTP_NOT_STARTED	LITERAL1

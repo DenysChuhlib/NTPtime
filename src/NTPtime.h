@@ -47,8 +47,7 @@ class NTPtime : public UNIXtime {
 public:
 	NTPtime(int8_t gmt = 0, int8_t gmtM = 0) {
         setTimeZone(gmt, gmtM);
-		_time = true;
-		_time_stat = 1;
+		startTime();
     }
 	
 	~NTPtime() {
@@ -107,7 +106,7 @@ public:
 			if (msFromUpdate() >= prd  * 1000UL) setTimeStat(UNIX_NOT_SYNCHRONIZED);
 		} else msFromUpdate();// перевірка переповнення
 		
-		if (_ntp_stat != NTP_NOT_STARTED && _time_stat == UNIX_NOT_SYNCHRONIZED) {
+		if (_ntp_stat != NTP_NOT_STARTED && status() == UNIX_NOT_SYNCHRONIZED) {
 			do {
 				_ntp_stat = requestTime();				// запит NTP
 				
@@ -115,7 +114,7 @@ public:
 			} while (!_async && _ntp_stat == NTP_WAITING_REPLY);
 			
 			return 1;
-		} else if (_time_stat == UNIX_NOT_STARTED || _ntp_stat == NTP_NOT_STARTED) {
+		} else if (status() == UNIX_NOT_STARTED || _ntp_stat == NTP_NOT_STARTED) {
 			_send_pack = false;
 		}
         return 0;
@@ -147,9 +146,7 @@ public:
         UNIX_NOT_SYNCHRONIZED 	1 - не синхронізовано
         UNIX_NOT_STARTED 		2 - зупинено
     */
-	/*bool status() { 			//UNIXtime.h
-        return _time_stat;
-    }*/
+	/*bool status();*/ 			//UNIXtime.h
 
 private:
 	// запитати і обновити час з сервера
@@ -180,26 +177,28 @@ private:
 				}
 			} else {
 				udp.read(buf, 48);             		// читаємо
-				uint32_t got_time = millis();       // запам'ятали час оновлення
-				uint16_t serv_ms = ((buf[44] << 8) | buf[45]) * 1000L >> 16;						// мс сервера
-				int16_t ser_del = (int16_t)serv_ms - (((buf[36] << 8) | buf[37]) * 1000L >> 16);	// мс затримки сервера
-				if (ser_del < 0) ser_del += 1000;   // перехід через секунду
-				_way = millis() - _way;				// весь шлях пакета і затримка сервера (фактично це пінг, але пакет NTP більший ніж пакет ping і тому затримка сервера більша)
-				int16_t ping = _way - ser_del;		// нинішній пінг (шлях пакета, або RTT)
-				_way = ping / 2;					// середній шлях в одну сторону
-				got_time -= (serv_ms + _way);      	// затримка часу
-				uint32_t unix = (uint32_t)(buf[40] << 8 | buf[41]) << 16 | (buf[42] << 8 | buf[43]); // 1900
-				unix -= 2208988800UL;              // переводимо в UNIX (1970)
-				
-				if (unix < 1662757200ul) {  		// некоректний час
-					_send_pack = false;
-					_ping = -1;
-					return 7;
+				{
+					uint32_t got_time = millis();       // запам'ятали час оновлення
+					uint16_t serv_ms = ((buf[44] << 8) | buf[45]) * 1000L >> 16;						// мс сервера
+					int16_t ser_del = (int16_t)serv_ms - (((buf[36] << 8) | buf[37]) * 1000L >> 16);	// мс затримки сервера
+					if (ser_del < 0) ser_del += 1000;   // перехід через секунду
+					_way = millis() - _way;				// весь шлях пакета і затримка сервера (фактично це пінг, але пакет NTP більший ніж пакет ping і тому затримка сервера більша)
+					int16_t ping = _way - ser_del;		// нинішній пінг (шлях пакета, або RTT)
+					_way = ping / 2;					// середній шлях в одну сторону
+					got_time -= (serv_ms + _way);      	// затримка часу
+					unix_t unix = (uint32_t)(buf[40] << 8 | buf[41]) << 16 | (buf[42] << 8 | buf[43]); // 1900
+					unix -= 2208988800UL;              // переводимо в UNIX (1970)
+					
+					if (unix < 1662757200ul) {  		// некоректний час
+						_send_pack = false;
+						_ping = -1;
+						return 7;
+					}
+					
+					_ping = ping;
+					_ms = got_time;
+					_unix = unix;
 				}
-				
-				_ping = ping;
-				_last_upd = got_time;
-				_unix = unix;
 				_send_pack = false;
 				setTimeStat(UNIX_OK);
 				#ifdef NTPtimeClockStrata_val
@@ -226,10 +225,7 @@ private:
 	uint32_t _way = 0;
 	int16_t _ping = -1;
 	
-	//bool _time = 0;
-	//uint8_t _time_stat = 2;
-	
-	//uint32_t _last_upd = 0;
-    //uint32_t _unix = 0;
+	//uint32_t _ms = 0;
+    //unix_t _unix = 0;
 };
 #endif
