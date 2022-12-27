@@ -369,9 +369,6 @@ String dayWeekShortStringRU(uint8_t wd);
 		- `setPort(uint16_t port);`		
 		- `setTimeout(uint16_t timeout);`
 	- Інші важливі виправлення
-- v1.1.3
-	- Добавлена підтримка UNIX 64bit
-	- Оптимізований алгоритм DST
 - v1.2.0
 	- Оптимізація
 	- Оновлений алгоритм DST
