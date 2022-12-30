@@ -3,7 +3,7 @@
 
 #include <NTPtime.h>
 NTPtime Time(2); //UA in +2 time zone
-DSTtime dst(2, 0, 7, 3, 10, 0, 7, 4); //https://en.wikipedia.org/wiki/Eastern_European_Summer_Time
+DSTime dst(2, 0, 7, 3, 10, 0, 7, 4); //https://en.wikipedia.org/wiki/Eastern_European_Summer_Time
 
 void setup() {
   Serial.begin(115200);
