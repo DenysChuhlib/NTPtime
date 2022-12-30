@@ -46,7 +46,7 @@ void loop() {
 	//and in UNIXtime it is not, and therefore the time there remains in place, but it can be started with the function startTime(); and it will go from the saved moment
 	moment1.startTime(); 
 	delay(1000);
-	Serial.println(String(F("Time:"))Time.timeString());
-	Serial.println(String(F("moment1:"))moment1.timeString());
+	Serial.println(String(F("Time:")) + Time.timeString());
+	Serial.println(String(F("moment1:")) + moment1.timeString());
   }
 }
