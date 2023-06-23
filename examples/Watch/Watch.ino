@@ -3,7 +3,7 @@
 
 #include <NTPtime.h>
 NTPtime Time(2); //UA in +2 time zone
-DSTime dst(2, 0, 7, 3, 10, 0, 7, 4); //https://en.wikipedia.org/wiki/Eastern_European_Summer_Time
+DSTime dst(3, 0, 7, 3, 10, 0, 7, 4); //https://en.wikipedia.org/wiki/Eastern_European_Summer_Time
 
 void setup() {
   Serial.begin(115200);
@@ -29,8 +29,8 @@ void loop() {
 
 	//now moment1 has a time, a timezone and a pointer to the dst structure (with data for automatic calculation)
 	Serial.println(moment1.timeString());
-	Serial.println(String(F("Time Zone in minute")) + moment1.getTimeZoneM());
-	Serial.println(String(F("DST is")) + moment1.getDST());
+	Serial.println(String(F("Time Zone in minute ")) + moment1.getTimeZoneM());
+	Serial.println(String(F("DST is ")) + moment1.getDST());
 	
 	//автоматичне обрахування DST відбуваэться якщо визиваються будьякі функції для отримання данних з часу (функції з найстройками не рахуються)
 	//але можна обрахувати і вручну
@@ -45,8 +45,8 @@ void loop() {
 	//initially, time always passes in the Time object of the NTPtime class
 	//and in UNIXtime it is not, and therefore the time there remains in place, but it can be started with the function startTime(); and it will go from the saved moment
 	moment1.startTime(); 
-	delay(1000);
-	Serial.println(String(F("Time:")) + Time.timeString());
-	Serial.println(String(F("moment1:")) + moment1.timeString());
+	delay(2000);
+	Serial.println(String(F("Time: ")) + Time.timeString());
+	Serial.println(String(F("moment1: ")) + moment1.timeString());
   }
 }
