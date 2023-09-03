@@ -477,7 +477,7 @@ String dayWeekShortStringRU(uint8_t wd);
             - `prevDay(unix_t unix);`
 - v1.2.1
     - Оптимізація
-    - в DSTime `dst_or_wt` тепер `mode` і має 3 значення (DST_WT = -1, DST_OFF = 0, DST_ON = 1)
+    - в DSTime тепер `dst_or_wt` і `mode` має 3 значення (DST_WT = -1, DST_OFF = 0, DST_ON = 1)
     - Всі difine константи замінені на enum
     - TimeFunctions (TimeFunc):
         - Тепер всі функції статичні
